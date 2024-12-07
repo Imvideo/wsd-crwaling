@@ -47,14 +47,12 @@ public class AuthController {
 
     // 토큰 갱신
     @PostMapping("/refresh")
-    public ResponseEntity<?> refreshToken(@RequestBody String refreshToken) {
+    public ResponseEntity<?> refreshAccessToken(@RequestBody String refreshToken) {
         try {
             String newAccessToken = jwtProvider.refreshAccessToken(refreshToken);
             return ResponseEntity.ok(newAccessToken);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("토큰 갱신 실패: " + e.getMessage());
         }
     }
 

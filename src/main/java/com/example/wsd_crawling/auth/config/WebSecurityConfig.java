@@ -39,4 +39,5 @@ public class WebSecurityConfig {
 
         return http.build();  // HttpSecurity 설정 반환
     }
+
 }

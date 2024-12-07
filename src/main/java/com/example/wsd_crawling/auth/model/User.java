@@ -1,23 +1,36 @@
 package com.example.wsd_crawling.auth.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 
 @Entity
-@Table(name = "users") // 데이터베이스 테이블명과 매핑
+@Table(name = "users")
 public class User {
 
     @Id
-    private Long id; // 기본 키로 사용할 필드
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-    private String username; // 사용자명
-    private String password; // 비밀번호
+    @Column(nullable = false, unique = true)
+    private String email;
 
-    // 기본 생성자
-    public User() {}
+    @Column(nullable = false)
+    private String password;
 
-    // getter, setter
+    @Column(nullable = false)
+    private String name;
+
+    // 기본 생성자 (JPA 요구)
+    public User() {
+    }
+
+    // 매개변수를 받는 생성자
+    public User(String email, String password, String name) {
+        this.email = email;
+        this.password = password;
+        this.name = name;
+    }
+
+    // Getter 및 Setter
     public Long getId() {
         return id;
     }
@@ -26,12 +39,12 @@ public class User {
         this.id = id;
     }
 
-    public String getUsername() {
-        return username;
+    public String getEmail() {
+        return email;
     }
 
-    public void setUsername(String username) {
-        this.username = username;
+    public void setEmail(String email) {
+        this.email = email;
     }
 
     public String getPassword() {
@@ -40,5 +53,13 @@ public class User {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 }
