@@ -33,6 +33,9 @@ dependencies {
 
 	// JWT 관련 의존성 추가
 	implementation 'io.jsonwebtoken:jjwt:0.11.5' // JWT 라이브러리 (토큰 생성 및 검증)
+	implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
+	implementation 'io.jsonwebtoken:jjwt-impl:0.11.5'
+	implementation 'io.jsonwebtoken:jjwt-jackson:0.11.5'
 
 	// Lombok 사용 (컴파일 시간에 자동으로 getter, setter 등 생성)
 	compileOnly 'org.projectlombok:lombok'
@@ -48,7 +51,11 @@ dependencies {
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.security:spring-security-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+	// Servlet API 의존성 추가
+	implementation 'javax.servlet:javax.servlet-api:4.0.1'
 }
+
 
 tasks.named('test') {
 	useJUnitPlatform()
