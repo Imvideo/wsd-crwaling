@@ -2,56 +2,62 @@ package com.example.wsd_crawling.auth.filter;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
 
-import javax.servlet.Filter;
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.servlet.http.HttpServletRequest;
+
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.Collections;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
-public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
+@Component
+public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final String SECRET_KEY = "your_secret_key"; // 비밀 키
 
     @Override
-    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
-            throws IOException, ServletException {
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+            throws ServletException, IOException {
 
-        HttpServletRequest httpRequest = (HttpServletRequest) request;
-
-        // "Authorization" 헤더에서 JWT 토큰 추출
-        String token = httpRequest.getHeader("Authorization");
+        String token = request.getHeader("Authorization");
 
         if (token != null && token.startsWith("Bearer ")) {
-            token = token.substring(7); // "Bearer " 부분을 제거
+            token = token.substring(7); // "Bearer " 부분 제거
 
             try {
-                // JWT 토큰을 파싱하여 claims 정보 추출
-                Claims claims = Jwts.parser()
-                        .setSigningKey(SECRET_KEY)
+                // JWT 토큰을 파싱하여 Claims 정보 추출
+                Claims claims = Jwts.parserBuilder()
+                        .setSigningKey(SECRET_KEY.getBytes()) // 시크릿 키를 byte 배열로 제공
+                        .build()
                         .parseClaimsJws(token)
                         .getBody();
 
-                // 토큰에서 사용자 정보 추출 및 Authentication 객체 생성
+                // 토큰에서 사용자명과 권한 정보 추출
                 String username = claims.getSubject();
-                Authentication authentication = new JwtAuthenticationToken(username, new ArrayList<>());
+                String role = claims.get("role", String.class); // JWT에서 role 정보 추출
 
-                // SecurityContext에 인증 정보 저장
-                SecurityContextHolder.getContext().setAuthentication(authentication);
+                if (username != null && role != null) {
+                    Authentication authentication = new JwtAuthenticationToken(
+                            username,
+                            Collections.singletonList(new SimpleGrantedAuthority(role))
+                    );
+
+                    // SecurityContext에 인증 정보 저장
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                }
             } catch (Exception e) {
                 // 토큰 검증 실패 시 에러 처리
-                System.out.println("Invalid JWT Token");
+                System.err.println("Invalid JWT Token: " + e.getMessage());
             }
         }
 
-        // 필터 체인 진행
-        chain.doFilter(request, response);
+        // 다음 필터로 요청 전달
+        filterChain.doFilter(request, response);
     }
 }

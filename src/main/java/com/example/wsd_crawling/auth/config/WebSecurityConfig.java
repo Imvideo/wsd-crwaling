@@ -1,15 +1,23 @@
 package com.example.wsd_crawling.auth.config;
 
+import com.example.wsd_crawling.auth.filter.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 public class WebSecurityConfig {
+
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    // JwtAuthenticationFilter를 생성자 주입
+    public WebSecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
+        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+    }
 
     // PasswordEncoder Bean
     @Bean
@@ -27,14 +35,8 @@ public class WebSecurityConfig {
                                 .requestMatchers("/auth/login", "/auth/register").permitAll()  // 로그인과 회원가입은 누구나 접근 가능
                                 .anyRequest().authenticated()  // 나머지 요청은 인증 필요
                 )
-                .addFilterBefore(new JwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);  // JWT 인증 필터 추가
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);  // JWT 인증 필터 추가
 
         return http.build();  // HttpSecurity 설정 반환
-    }
-
-    // UserDetailsService Bean (사용자 정보 서비스)
-    @Bean
-    public UserDetailsService userDetailsService() {
-        return new CustomUserDetailsService();  // 사용자 정보를 반환하는 서비스
     }
 }

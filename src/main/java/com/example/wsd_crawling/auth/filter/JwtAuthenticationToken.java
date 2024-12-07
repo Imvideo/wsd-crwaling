@@ -12,16 +12,24 @@ public class JwtAuthenticationToken extends AbstractAuthenticationToken {
     public JwtAuthenticationToken(String principal, Collection<SimpleGrantedAuthority> authorities) {
         super(authorities);
         this.principal = principal;
-        setAuthenticated(true);
+        setAuthenticated(true); // 인증된 상태로 설정
     }
 
     @Override
     public Object getCredentials() {
-        return null; // 토큰이 아닌 자격 증명은 필요 없으므로 null 반환
+        return null; // JWT 기반이므로 자격 증명이 필요 없음
     }
 
     @Override
     public Object getPrincipal() {
         return principal; // 사용자명 반환
+    }
+
+    @Override
+    public void setAuthenticated(boolean isAuthenticated) {
+        if (isAuthenticated) {
+            throw new IllegalArgumentException("Cannot set this token to trusted - use constructor instead.");
+        }
+        super.setAuthenticated(false);
     }
 }
