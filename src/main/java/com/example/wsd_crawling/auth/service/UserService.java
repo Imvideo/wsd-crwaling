@@ -5,6 +5,8 @@ import com.example.wsd_crawling.auth.model.UserLoginRequest;
 import com.example.wsd_crawling.auth.model.UserRegistrationRequest;
 import com.example.wsd_crawling.auth.repository.UserRepository;
 import com.example.wsd_crawling.auth.util.JwtProvider;
+import java.util.HashMap;
+import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -53,10 +55,12 @@ public class UserService {
     }
 
     // 로그인
-    public String login(UserLoginRequest request) {
+    public Map<String, String> login(UserLoginRequest request) {
+        // 사용자 인증
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new IllegalArgumentException("이메일 또는 비밀번호가 잘못되었습니다."));
 
+        // 비밀번호 확인
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new IllegalArgumentException("이메일 또는 비밀번호가 잘못되었습니다.");
         }
@@ -68,9 +72,14 @@ public class UserService {
         // Refresh Token 저장
         refreshTokenService.storeToken(refreshToken);
 
-        // Access 토큰과 Refresh 토큰 반환 (예: JSON 형태로 반환)
-        return "{ \"accessToken\": \"" + accessToken + "\", \"refreshToken\": \"" + refreshToken + "\" }";
+        // 응답 데이터 구성
+        Map<String, String> tokens = new HashMap<>();
+        tokens.put("accessToken", accessToken);
+        tokens.put("refreshToken", refreshToken);
+
+        return tokens;
     }
+
 
     // 회원 정보 수정
     public String updateProfile(User currentUser, UserRegistrationRequest request) {
@@ -95,7 +104,7 @@ public class UserService {
             throw new IllegalArgumentException("유효하지 않은 Refresh 토큰입니다.");
         }
 
-        String userEmail = jwtProvider.getUserEmailFromToken(refreshToken);
+        String userEmail = jwtProvider.extractEmailFromToken(refreshToken);
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 

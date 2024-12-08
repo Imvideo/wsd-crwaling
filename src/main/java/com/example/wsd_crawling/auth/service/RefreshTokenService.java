@@ -12,22 +12,27 @@ public class RefreshTokenService {
     // Refresh Token 저장
     public void storeToken(String token) {
         tokenStore.put(token, true); // 유효 상태 저장
-        System.out.println("Stored Refresh Token: " + token); // 로그 추가
+        System.out.println("저장된 Refresh Token: '" + token + "'"); // 디버깅 로그
     }
 
     // Refresh Token 검증
     public boolean isTokenValid(String token) {
-        System.out.println("현재 저장된 토큰 목록: " + tokenStore); // 저장된 토큰 상태를 출력
+        token = token.trim(); // 공백 제거
+        System.out.println("저장된 토큰 목록: " + tokenStore.keySet());
+        System.out.println("검증하려는 토큰: '" + token + "'");
         boolean isValid = tokenStore.getOrDefault(token, false);
-        System.out.println("검증하려는 토큰: " + token);
         System.out.println("토큰 유효 여부: " + isValid);
         return isValid;
     }
 
-
-
     // Refresh Token 무효화
     public void invalidateToken(String token) {
-        tokenStore.remove(token); // 사용 후 제거
+        token = token.trim(); // 공백 제거
+        if (tokenStore.containsKey(token)) {
+            tokenStore.remove(token);
+            System.out.println("무효화된 토큰: '" + token + "'");
+        } else {
+            System.out.println("무효화하려는 토큰이 존재하지 않음: '" + token + "'");
+        }
     }
 }

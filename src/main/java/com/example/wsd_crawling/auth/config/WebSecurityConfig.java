@@ -22,8 +22,9 @@ public class WebSecurityConfig {
     // PasswordEncoder Bean
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();  // 비밀번호를 암호화할 BCryptPasswordEncoder 사용
+        return new BCryptPasswordEncoder();
     }
+
 
     // SecurityFilterChain Bean for HTTP security configuration
     @Bean

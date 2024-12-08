@@ -20,14 +20,12 @@ public class JwtProvider {
     private long refreshExpirationMs;
 
     public JwtProvider(@Value("${jwt.secret}") String secret) {
-        System.out.println("JWT Secret Key: " + secret);
         if (secret.length() * 8 < 512) {
             throw new IllegalArgumentException("The secret key must be at least 512 bits for HS512.");
         }
         this.secretKey = Keys.hmacShaKeyFor(secret.getBytes());
+        System.out.println("JWT Secret Key Initialized."); // 초기화 확인 로그
     }
-
-
 
     // Access Token 생성
     public String createAccessToken(String email) {
@@ -40,65 +38,56 @@ public class JwtProvider {
     }
 
     // Refresh Token 생성
-    public String createRefreshToken(String username) {
+    public String createRefreshToken(String email) {
         Date issuedAt = new Date();
         Date expiration = new Date(System.currentTimeMillis() + refreshExpirationMs);
-        System.out.println("Refresh Token 생성 - 발급 시각: " + issuedAt + ", 만료 시각: " + expiration);
+        System.out.println("Refresh Token 생성: 발급 시각=" + issuedAt + ", 만료 시각=" + expiration); // 디버그 로그
 
         return Jwts.builder()
-                .setSubject(username)
-                .setIssuedAt(issuedAt)
-                .setExpiration(expiration)
-                .signWith(secretKey, SignatureAlgorithm.HS512)
+                .setSubject(email) // 사용자 이메일을 subject로 설정
+                .setIssuedAt(issuedAt) // 발급 시각
+                .setExpiration(expiration) // 만료 시각
+                .signWith(secretKey, SignatureAlgorithm.HS512) // 서명
                 .compact();
     }
 
-
     // Access Token 갱신
     public String refreshAccessToken(String refreshToken) {
-        try {
-            if (!validateToken(refreshToken)) {
-                throw new IllegalArgumentException("Invalid Refresh Token.");
-            }
-            String email = getUserEmailFromToken(refreshToken); // Refresh Token에서 사용자 이메일 추출
-            return createAccessToken(email); // 새로운 Access Token 생성
-        } catch (ExpiredJwtException e) {
-            throw new IllegalArgumentException("Refresh Token has expired.", e);
-        } catch (JwtException e) {
-            throw new IllegalArgumentException("Error while refreshing Access Token.", e);
+        if (!validateToken(refreshToken)) {
+            throw new IllegalArgumentException("Invalid Refresh Token.");
         }
+
+        String email = extractEmailFromToken(refreshToken); // Refresh Token에서 이메일 추출
+        return createAccessToken(email); // 새로운 Access Token 생성
     }
 
     // JWT Token 유효성 검증
     public boolean validateToken(String token) {
         try {
             Jwts.parserBuilder().setSigningKey(secretKey).build().parseClaimsJws(token);
-            System.out.println("Valid Token: " + token); // 성공 로그 추가
+            System.out.println("유효한 토큰: " + token); // 성공 로그
             return true;
-        } catch (SecurityException e) {
-            System.out.println("Invalid JWT signature: " + e.getMessage());
-        } catch (MalformedJwtException e) {
-            System.out.println("Invalid JWT token: " + e.getMessage());
         } catch (ExpiredJwtException e) {
-            System.out.println("JWT token is expired: " + e.getMessage());
-        } catch (UnsupportedJwtException e) {
-            System.out.println("JWT token is unsupported: " + e.getMessage());
-        } catch (IllegalArgumentException e) {
-            System.out.println("JWT claims string is empty: " + e.getMessage());
+            System.out.println("JWT 토큰이 만료됨: " + e.getMessage());
         } catch (JwtException e) {
-            System.out.println("Token validation error: " + e.getMessage());
+            System.out.println("JWT 토큰 검증 실패: " + e.getMessage());
+        } catch (IllegalArgumentException e) {
+            System.out.println("JWT 토큰이 비어있음: " + e.getMessage());
         }
         return false;
     }
 
-
     // JWT Token에서 사용자 이메일 추출
-    public String getUserEmailFromToken(String token) {
-        return Jwts.parserBuilder()
-                .setSigningKey(secretKey)
-                .build()
-                .parseClaimsJws(token)
-                .getBody()
-                .getSubject(); // subject 필드를 사용자 이메일로 사용
+    public String extractEmailFromToken(String token) {
+        try {
+            return Jwts.parserBuilder()
+                    .setSigningKey(secretKey)
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody()
+                    .getSubject(); // Subject에서 이메일 추출
+        } catch (JwtException e) {
+            throw new IllegalArgumentException("토큰에서 이메일을 추출할 수 없습니다: " + e.getMessage(), e);
+        }
     }
 }

@@ -3,6 +3,7 @@ package com.example.wsd_crawling.auth.controller;
 import com.example.wsd_crawling.auth.model.User;
 import com.example.wsd_crawling.auth.model.UserRegistrationRequest;
 import com.example.wsd_crawling.auth.model.UserLoginRequest;
+import com.example.wsd_crawling.auth.repository.UserRepository;
 import com.example.wsd_crawling.auth.service.UserService;
 import com.example.wsd_crawling.auth.service.RefreshTokenService;
 import com.example.wsd_crawling.auth.util.JwtProvider;
@@ -12,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.Map;
 
 @RestController
@@ -26,6 +28,8 @@ public class AuthController {
 
     @Autowired
     private RefreshTokenService refreshTokenService;
+    @Autowired
+    private UserRepository userRepository;
 
     // 회원 가입
     @PostMapping("/register")
@@ -44,18 +48,28 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody UserLoginRequest request) {
         try {
-            String jwtToken = userService.login(request);
-            return ResponseEntity.ok(jwtToken);
+            // 로그인 처리 및 토큰 생성
+            Map<String, String> tokens = userService.login(request);
+
+            // 성공 응답
+            return ResponseEntity.ok(tokens);
         } catch (IllegalArgumentException e) {
+            // 인증 실패
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
         } catch (Exception e) {
+            // 기타 예외 처리
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("로그인 실패: " + e.getMessage());
         }
     }
 
+
+
+
     // 토큰 갱신
     @PostMapping("/refresh")
-    public ResponseEntity<?> refreshAccessToken(@RequestBody String refreshToken) {
+    public ResponseEntity<?> refreshAccessToken(@RequestBody Map<String, String> body) {
+        String refreshToken = body.get("refreshToken");
+
         try {
             // Refresh Token 검증
             if (!refreshTokenService.isTokenValid(refreshToken)) {
@@ -68,12 +82,22 @@ public class AuthController {
             // Refresh Token 사용 후 무효화
             refreshTokenService.invalidateToken(refreshToken);
 
-            return ResponseEntity.ok(newAccessToken);
+            // 새로운 Refresh Token 발급 및 저장
+            String newRefreshToken = jwtProvider.createRefreshToken(jwtProvider.extractEmailFromToken(refreshToken));
+            refreshTokenService.storeToken(newRefreshToken);
+
+            // 응답 데이터 구성
+            Map<String, String> tokens = new HashMap<>();
+            tokens.put("accessToken", newAccessToken);
+            tokens.put("refreshToken", newRefreshToken);
+
+            return ResponseEntity.ok(tokens);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("토큰 갱신 실패: " + e.getMessage());
         }
     }
-
 
     // 회원 정보 수정
     @PutMapping("/profile")
