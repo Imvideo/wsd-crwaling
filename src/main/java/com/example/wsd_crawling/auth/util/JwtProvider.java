@@ -20,11 +20,14 @@ public class JwtProvider {
     private long refreshExpirationMs;
 
     public JwtProvider(@Value("${jwt.secret}") String secret) {
+        System.out.println("JWT Secret Key: " + secret);
         if (secret.length() * 8 < 512) {
             throw new IllegalArgumentException("The secret key must be at least 512 bits for HS512.");
         }
         this.secretKey = Keys.hmacShaKeyFor(secret.getBytes());
     }
+
+
 
     // Access Token 생성
     public String createAccessToken(String email) {
@@ -37,14 +40,19 @@ public class JwtProvider {
     }
 
     // Refresh Token 생성
-    public String createRefreshToken(String email) {
+    public String createRefreshToken(String username) {
+        Date issuedAt = new Date();
+        Date expiration = new Date(System.currentTimeMillis() + refreshExpirationMs);
+        System.out.println("Refresh Token 생성 - 발급 시각: " + issuedAt + ", 만료 시각: " + expiration);
+
         return Jwts.builder()
-                .setSubject(email) // 사용자 이메일을 subject로 설정
-                .setIssuedAt(new Date()) // 토큰 발행 시간
-                .setExpiration(new Date(System.currentTimeMillis() + refreshExpirationMs)) // 만료 시간 설정
-                .signWith(secretKey, SignatureAlgorithm.HS512) // 서명 알고리즘
+                .setSubject(username)
+                .setIssuedAt(issuedAt)
+                .setExpiration(expiration)
+                .signWith(secretKey, SignatureAlgorithm.HS512)
                 .compact();
     }
+
 
     // Access Token 갱신
     public String refreshAccessToken(String refreshToken) {
@@ -65,6 +73,7 @@ public class JwtProvider {
     public boolean validateToken(String token) {
         try {
             Jwts.parserBuilder().setSigningKey(secretKey).build().parseClaimsJws(token);
+            System.out.println("Valid Token: " + token); // 성공 로그 추가
             return true;
         } catch (SecurityException e) {
             System.out.println("Invalid JWT signature: " + e.getMessage());
@@ -76,9 +85,12 @@ public class JwtProvider {
             System.out.println("JWT token is unsupported: " + e.getMessage());
         } catch (IllegalArgumentException e) {
             System.out.println("JWT claims string is empty: " + e.getMessage());
+        } catch (JwtException e) {
+            System.out.println("Token validation error: " + e.getMessage());
         }
         return false;
     }
+
 
     // JWT Token에서 사용자 이메일 추출
     public String getUserEmailFromToken(String token) {

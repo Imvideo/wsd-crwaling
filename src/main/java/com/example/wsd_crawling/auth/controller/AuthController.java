@@ -4,6 +4,7 @@ import com.example.wsd_crawling.auth.model.User;
 import com.example.wsd_crawling.auth.model.UserRegistrationRequest;
 import com.example.wsd_crawling.auth.model.UserLoginRequest;
 import com.example.wsd_crawling.auth.service.UserService;
+import com.example.wsd_crawling.auth.service.RefreshTokenService;
 import com.example.wsd_crawling.auth.util.JwtProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -22,6 +23,9 @@ public class AuthController {
 
     @Autowired
     private JwtProvider jwtProvider;
+
+    @Autowired
+    private RefreshTokenService refreshTokenService;
 
     // 회원 가입
     @PostMapping("/register")
@@ -51,15 +55,25 @@ public class AuthController {
 
     // 토큰 갱신
     @PostMapping("/refresh")
-    public ResponseEntity<?> refreshAccessToken(@RequestBody Map<String, String> tokenRequest) {
+    public ResponseEntity<?> refreshAccessToken(@RequestBody String refreshToken) {
         try {
-            String refreshToken = tokenRequest.get("refreshToken");
+            // Refresh Token 검증
+            if (!refreshTokenService.isTokenValid(refreshToken)) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Refresh Token이 유효하지 않습니다.");
+            }
+
+            // Access Token 갱신
             String newAccessToken = jwtProvider.refreshAccessToken(refreshToken);
+
+            // Refresh Token 사용 후 무효화
+            refreshTokenService.invalidateToken(refreshToken);
+
             return ResponseEntity.ok(newAccessToken);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
         }
     }
+
 
     // 회원 정보 수정
     @PutMapping("/profile")

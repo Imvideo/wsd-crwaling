@@ -21,6 +21,9 @@ public class UserService {
     @Autowired
     private JwtProvider jwtProvider;
 
+    @Autowired
+    private RefreshTokenService refreshTokenService;
+
     // 회원 가입
     public String registerUser(UserRegistrationRequest request) {
         String email = request.getEmail();
@@ -58,7 +61,15 @@ public class UserService {
             throw new IllegalArgumentException("이메일 또는 비밀번호가 잘못되었습니다.");
         }
 
-        return jwtProvider.createAccessToken(user.getEmail());
+        // Access 및 Refresh Token 생성
+        String accessToken = jwtProvider.createAccessToken(user.getEmail());
+        String refreshToken = jwtProvider.createRefreshToken(user.getEmail());
+
+        // Refresh Token 저장
+        refreshTokenService.storeToken(refreshToken);
+
+        // Access 토큰과 Refresh 토큰 반환 (예: JSON 형태로 반환)
+        return "{ \"accessToken\": \"" + accessToken + "\", \"refreshToken\": \"" + refreshToken + "\" }";
     }
 
     // 회원 정보 수정
