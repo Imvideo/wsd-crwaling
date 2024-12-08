@@ -21,17 +21,10 @@ public class JwtProvider {
     private long refreshExpirationMs;
 
     public JwtProvider(@Value("${jwt.secret}") String secret) {
-        try {
-            // Base64 디코딩 후 SecretKey 생성
-            byte[] decodedKey = Base64.getDecoder().decode(secret);
-            if (decodedKey.length < 64) { // 최소 길이 검증 (64 bytes = 512 bits)
-                throw new IllegalArgumentException("The decoded key must be at least 64 bytes (512 bits).");
-            }
-            this.secretKey = Keys.hmacShaKeyFor(decodedKey);
-            System.out.println("JWT Secret Key Initialized Successfully.");
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Invalid Base64 encoded key. Ensure it's a valid Base64-encoded string.", e);
-        }
+        // Base64 디코딩 후 SecretKey 생성
+        byte[] decodedKey = Base64.getDecoder().decode(secret);
+        this.secretKey = Keys.hmacShaKeyFor(decodedKey);
+        System.out.println("JWT Secret Key Initialized Successfully.");
     }
 
     // Access Token 생성

@@ -6,12 +6,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/jobs")
@@ -20,30 +16,19 @@ public class JobController {
     @Autowired
     private JobService jobService;
 
+    // 검색 및 필터링 API
     @GetMapping
-    public ResponseEntity<?> getJobs(
-            @RequestParam(required = false) String location,
-            @RequestParam(required = false) String experience,
-            @RequestParam(required = false) String salary,
-            @RequestParam(required = false) String techStack,
-            @RequestParam(required = false) String query,
+    public ResponseEntity<Page<Job>> searchJobs(
+            @RequestParam(defaultValue = "") String keyword,
+            @RequestParam(defaultValue = "") String location,
+            @RequestParam(defaultValue = "") String experience,
+            @RequestParam(defaultValue = "") String salary,
+            @RequestParam(defaultValue = "") String technologyStack,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size,
-            @RequestParam(defaultValue = "createdAt") String sortBy,
-            @RequestParam(defaultValue = "desc") String sortDirection
+            @RequestParam(defaultValue = "20") int size
     ) {
-        Sort sort = sortDirection.equalsIgnoreCase("asc") ?
-                Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
-        Pageable pageable = PageRequest.of(page, size, sort);
-
-        Page<Job> jobs;
-
-        if (query != null && !query.isEmpty()) {
-            jobs = jobService.searchJobs(query, pageable);
-        } else {
-            jobs = jobService.getFilteredJobs(location, experience, salary, pageable);
-        }
-
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Job> jobs = jobService.searchJobs(keyword, location, experience, salary, technologyStack, pageable);
         return ResponseEntity.ok(jobs);
     }
 }

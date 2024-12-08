@@ -2,24 +2,34 @@ package com.example.wsd_crawling.auth.filter;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-
+import javax.crypto.SecretKey;
 import java.io.IOException;
+import java.util.Base64;
 import java.util.Collections;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    private final String SECRET_KEY = "your_secret_key"; // 비밀 키
+    private final SecretKey secretKey;
+
+    // SecretKey를 @Value로 주입받아 생성
+    public JwtAuthenticationFilter(@Value("${jwt.secret}") String secret) {
+        // Base64 디코딩 후 SecretKey 생성
+        byte[] decodedKey = Base64.getDecoder().decode(secret);
+        this.secretKey = Keys.hmacShaKeyFor(decodedKey);
+    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -28,36 +38,38 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String token = request.getHeader("Authorization");
 
         if (token != null && token.startsWith("Bearer ")) {
-            token = token.substring(7); // "Bearer " 부분 제거
+            token = token.substring(7);
 
             try {
-                // JWT 토큰을 파싱하여 Claims 정보 추출
+                System.out.println("Raw Token: " + token);
+
                 Claims claims = Jwts.parserBuilder()
-                        .setSigningKey(SECRET_KEY.getBytes()) // 시크릿 키를 byte 배열로 제공
+                        .setSigningKey(secretKey) // SecretKey를 사용하여 토큰 서명 검증
                         .build()
                         .parseClaimsJws(token)
                         .getBody();
 
-                // 토큰에서 사용자명과 권한 정보 추출
                 String username = claims.getSubject();
-                String role = claims.get("role", String.class); // JWT에서 role 정보 추출
+                System.out.println("JWT Claims: " + claims);
+                System.out.println("Extracted Username: " + username);
 
-                if (username != null && role != null) {
+                if (username != null) {
                     Authentication authentication = new JwtAuthenticationToken(
                             username,
-                            Collections.singletonList(new SimpleGrantedAuthority(role))
+                            Collections.emptyList()
                     );
 
-                    // SecurityContext에 인증 정보 저장
                     SecurityContextHolder.getContext().setAuthentication(authentication);
+                    System.out.println("Authentication set for: " + username);
                 }
             } catch (Exception e) {
-                // 토큰 검증 실패 시 에러 처리
                 System.err.println("Invalid JWT Token: " + e.getMessage());
+                e.printStackTrace(); // 예외 스택 트레이스 출력
             }
+
         }
 
-        // 다음 필터로 요청 전달
         filterChain.doFilter(request, response);
     }
+
 }

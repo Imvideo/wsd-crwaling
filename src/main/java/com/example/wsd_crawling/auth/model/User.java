@@ -1,10 +1,15 @@
 package com.example.wsd_crawling.auth.model;
 
 import jakarta.persistence.*;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+
+import java.util.Collection;
+import java.util.Collections;
 
 @Entity
 @Table(name = "users")
-public class User {
+public class User implements UserDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -61,5 +66,37 @@ public class User {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    // UserDetails 인터페이스 구현
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        // 권한 정보 반환 (예: ROLE_USER)
+        return Collections.emptyList();
+    }
+
+    @Override
+    public String getUsername() {
+        return email;
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return true; // 계정 만료 여부
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return true; // 계정 잠김 여부
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true; // 자격 증명 만료 여부
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return true; // 계정 활성화 여부
     }
 }

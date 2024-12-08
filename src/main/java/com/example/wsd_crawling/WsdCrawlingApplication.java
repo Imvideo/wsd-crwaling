@@ -2,10 +2,8 @@ package com.example.wsd_crawling;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
-@SpringBootApplication
-@EnableJpaRepositories(basePackages = "com.example.wsd_crawling.auth.repository") // 리포지토리 패키지 경로
+@SpringBootApplication // 최상위 패키지에서 하위 패키지의 모든 컴포넌트를 스캔
 public class WsdCrawlingApplication {
 
 	public static void main(String[] args) {

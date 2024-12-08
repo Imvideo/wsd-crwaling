@@ -13,18 +13,30 @@ public class JobService {
     @Autowired
     private JobRepository jobRepository;
 
-    public Page<Job> getFilteredJobs(String location, String experience, String salary, Pageable pageable) {
-        return jobRepository.findByLocationContainingAndExperienceContainingAndSalaryContaining(
-                location != null ? location : "",
-                experience != null ? experience : "",
-                salary != null ? salary : "",
+    public Page<Job> getFilteredJobs(String location, String experience, String salary, String technologyStack, Pageable pageable) {
+        return jobRepository.findByLocationContainingAndExperienceContainingAndSalaryContainingAndTechnologyStackContaining(
+                location,
+                experience,
+                salary,
+                technologyStack,
                 pageable
         );
     }
 
-    public Page<Job> searchJobs(String query, Pageable pageable) {
-        return jobRepository.findByTitleContainingOrCompanyContainingOrPositionContaining(
-                query, query, query, pageable
+    // 검색 및 필터링 메서드 추가
+    public Page<Job> searchJobs(String keyword, String location, String experience, String salary, String technologyStack, Pageable pageable) {
+        // 모든 조건에 키워드 검색 추가
+        return jobRepository.findByTitleContainingAndLocationContainingAndExperienceContainingAndSalaryContainingAndTechnologyStackContaining(
+                keyword,
+                location,
+                experience,
+                salary,
+                technologyStack,
+                pageable
         );
+    }
+
+    public Page<Job> getJobsSortedByCreatedAt(Pageable pageable) {
+        return jobRepository.findAllByOrderByCreatedAtDesc(pageable);
     }
 }

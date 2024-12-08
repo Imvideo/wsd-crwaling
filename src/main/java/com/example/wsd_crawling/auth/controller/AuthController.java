@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -102,10 +103,22 @@ public class AuthController {
     // 회원 정보 수정
     @PutMapping("/profile")
     public ResponseEntity<?> updateProfile(
-            @AuthenticationPrincipal User currentUser,
-            @RequestBody UserRegistrationRequest request
+            @RequestBody UserRegistrationRequest request // 요청으로 받은 사용자 정보
     ) {
         try {
+            // SecurityContextHolder에서 인증된 사용자 정보 가져오기
+            String username = SecurityContextHolder.getContext().getAuthentication().getName();
+            if (username == null || username.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인이 필요합니다.");
+            }
+
+            // 이메일 기반으로 현재 사용자 찾기
+            User currentUser = userService.findUserByEmail(username);
+            if (currentUser == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("사용자 정보를 찾을 수 없습니다.");
+            }
+
+            // 사용자 프로필 업데이트
             userService.updateProfile(currentUser, request);
             return ResponseEntity.ok("회원 정보가 성공적으로 수정되었습니다.");
         } catch (IllegalArgumentException e) {
@@ -114,4 +127,6 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("회원 정보 수정 실패: " + e.getMessage());
         }
     }
+
+
 }

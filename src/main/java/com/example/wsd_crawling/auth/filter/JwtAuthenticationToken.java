@@ -12,7 +12,7 @@ public class JwtAuthenticationToken extends AbstractAuthenticationToken {
     public JwtAuthenticationToken(String principal, Collection<SimpleGrantedAuthority> authorities) {
         super(authorities);
         this.principal = principal;
-        setAuthenticated(true); // 인증된 상태로 설정
+        this.setAuthenticated(true); // 인증된 상태로 설정
     }
 
     @Override
@@ -25,11 +25,11 @@ public class JwtAuthenticationToken extends AbstractAuthenticationToken {
         return principal; // 사용자명 반환
     }
 
-    @Override
-    public void setAuthenticated(boolean isAuthenticated) {
-        if (isAuthenticated) {
-            throw new IllegalArgumentException("Cannot set this token to trusted - use constructor instead.");
-        }
-        super.setAuthenticated(false);
-    }
+//    @Override
+//    public void setAuthenticated(boolean isAuthenticated) {
+//        if (isAuthenticated) {
+//            throw new IllegalArgumentException("Cannot set this token to trusted - use constructor instead.");
+//        }
+//        super.setAuthenticated(false);
+//    }
 }
