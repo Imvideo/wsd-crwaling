@@ -1,5 +1,6 @@
 package com.example.wsd_crawling.auth.controller;
 
+import com.example.wsd_crawling.auth.model.User;
 import com.example.wsd_crawling.auth.model.UserRegistrationRequest;
 import com.example.wsd_crawling.auth.model.UserLoginRequest;
 import com.example.wsd_crawling.auth.service.UserService;
@@ -7,7 +8,10 @@ import com.example.wsd_crawling.auth.util.JwtProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/auth")
@@ -47,8 +51,9 @@ public class AuthController {
 
     // 토큰 갱신
     @PostMapping("/refresh")
-    public ResponseEntity<?> refreshAccessToken(@RequestBody String refreshToken) {
+    public ResponseEntity<?> refreshAccessToken(@RequestBody Map<String, String> tokenRequest) {
         try {
+            String refreshToken = tokenRequest.get("refreshToken");
             String newAccessToken = jwtProvider.refreshAccessToken(refreshToken);
             return ResponseEntity.ok(newAccessToken);
         } catch (IllegalArgumentException e) {
@@ -58,10 +63,13 @@ public class AuthController {
 
     // 회원 정보 수정
     @PutMapping("/profile")
-    public ResponseEntity<?> updateProfile(@RequestBody UserRegistrationRequest request) {
+    public ResponseEntity<?> updateProfile(
+            @AuthenticationPrincipal User currentUser,
+            @RequestBody UserRegistrationRequest request
+    ) {
         try {
-            String result = userService.updateProfile(request);
-            return ResponseEntity.ok(result);
+            userService.updateProfile(currentUser, request);
+            return ResponseEntity.ok("회원 정보가 성공적으로 수정되었습니다.");
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         } catch (Exception e) {

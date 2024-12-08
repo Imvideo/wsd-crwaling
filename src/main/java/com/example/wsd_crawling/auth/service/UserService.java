@@ -16,21 +16,26 @@ public class UserService {
     private UserRepository userRepository;
 
     @Autowired
-    private PasswordEncoder passwordEncoder; // 비밀번호 암호화
+    private PasswordEncoder passwordEncoder;
 
     @Autowired
-    private JwtProvider jwtProvider; // JWT 토큰 생성기
+    private JwtProvider jwtProvider;
 
     // 회원 가입
     public String registerUser(UserRegistrationRequest request) {
-        if (userRepository.existsByEmail(request.getEmail())) {
+        String email = request.getEmail();
+
+        if (!isValidEmail(email)) {
+            throw new IllegalArgumentException("유효하지 않은 이메일 형식입니다.");
+        }
+
+        if (userRepository.existsByEmail(email)) {
             throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
         }
 
-        // 생성자를 사용해 User 객체 생성
         User user = new User(
-                request.getEmail(),
-                passwordEncoder.encode(request.getPassword()), // 비밀번호 암호화
+                email,
+                passwordEncoder.encode(request.getPassword()),
                 request.getName()
         );
 
@@ -38,40 +43,51 @@ public class UserService {
         return "회원가입 성공";
     }
 
+    // 이메일 형식 검증
+    private boolean isValidEmail(String email) {
+        String emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$";
+        return email.matches(emailRegex);
+    }
 
     // 로그인
     public String login(UserLoginRequest request) {
-        // 사용자 인증
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new IllegalArgumentException("이메일 또는 비밀번호가 잘못되었습니다."));
 
-        // 비밀번호 확인
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new IllegalArgumentException("이메일 또는 비밀번호가 잘못되었습니다.");
         }
 
-        // JWT Access Token 생성
         return jwtProvider.createAccessToken(user.getEmail());
     }
 
     // 회원 정보 수정
-    public String updateProfile(UserRegistrationRequest request) {
-        // 사용자 조회
-        User user = userRepository.findByEmail(request.getEmail())
+    public String updateProfile(User currentUser, UserRegistrationRequest request) {
+        User user = userRepository.findById(currentUser.getId())
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
-        // 비밀번호 변경 (옵션)
         if (request.getPassword() != null && !request.getPassword().isEmpty()) {
             user.setPassword(passwordEncoder.encode(request.getPassword()));
         }
 
-        // 이름 변경
         if (request.getName() != null && !request.getName().isEmpty()) {
             user.setName(request.getName());
         }
 
-        // 업데이트 저장
         userRepository.save(user);
         return "회원 정보 수정 성공";
+    }
+
+    // Refresh Token 검증 및 Access Token 갱신
+    public String refreshToken(String refreshToken) {
+        if (!jwtProvider.validateToken(refreshToken)) {
+            throw new IllegalArgumentException("유효하지 않은 Refresh 토큰입니다.");
+        }
+
+        String userEmail = jwtProvider.getUserEmailFromToken(refreshToken);
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        return jwtProvider.createAccessToken(user.getEmail());
     }
 }
