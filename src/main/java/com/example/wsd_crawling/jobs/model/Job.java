@@ -4,33 +4,58 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
+@Table(name = "job_postings") // 테이블 이름 일치
 public class Job {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String title;  // 공고 제목
-    private String location;  // 지역
-    private String experience;  // 경력
-    private String salary;  // 급여
-    private String technologyStack;  // 기술 스택
+    @Column(name = "company_id", nullable = false)
+    private Long companyId;
 
-    @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt;  // 생성 시간
+    @Column(nullable = false)
+    private String title;
 
-    @PrePersist
-    protected void onCreate() {
-        this.createdAt = LocalDateTime.now();
-    }
+    @Column(nullable = false, columnDefinition = "TEXT")
+    private String description;
 
-    // Getter 및 Setter
+    @Column(nullable = false)
+    private String location;
+
+    @Column(nullable = false)
+    private Integer salary;
+
+    @Column(name = "employment_type", nullable = false)
+    private String employmentType;
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
+
+    @Column(nullable = false)
+    private LocalDateTime deadline;
+
+    @Column(nullable = false)
+    private String sector;
+
+    // Getters and Setters
     public Long getId() {
         return id;
     }
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public Long getCompanyId() {
+        return companyId;
+    }
+
+    public void setCompanyId(Long companyId) {
+        this.companyId = companyId;
     }
 
     public String getTitle() {
@@ -41,6 +66,14 @@ public class Job {
         this.title = title;
     }
 
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
     public String getLocation() {
         return location;
     }
@@ -49,28 +82,20 @@ public class Job {
         this.location = location;
     }
 
-    public String getExperience() {
-        return experience;
-    }
-
-    public void setExperience(String experience) {
-        this.experience = experience;
-    }
-
-    public String getSalary() {
+    public Integer getSalary() {
         return salary;
     }
 
-    public void setSalary(String salary) {
+    public void setSalary(Integer salary) {
         this.salary = salary;
     }
 
-    public String getTechnologyStack() {
-        return technologyStack;
+    public String getEmploymentType() {
+        return employmentType;
     }
 
-    public void setTechnologyStack(String technologyStack) {
-        this.technologyStack = technologyStack;
+    public void setEmploymentType(String employmentType) {
+        this.employmentType = employmentType;
     }
 
     public LocalDateTime getCreatedAt() {
@@ -79,5 +104,29 @@ public class Job {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
+    public LocalDateTime getDeadline() {
+        return deadline;
+    }
+
+    public void setDeadline(LocalDateTime deadline) {
+        this.deadline = deadline;
+    }
+
+    public String getSector() {
+        return sector;
+    }
+
+    public void setSector(String sector) {
+        this.sector = sector;
     }
 }

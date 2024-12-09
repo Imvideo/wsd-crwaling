@@ -4,29 +4,40 @@ import com.example.wsd_crawling.jobs.model.Job;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
-@Repository
 public interface JobRepository extends JpaRepository<Job, Long> {
 
-    Page<Job> findByLocationContainingAndExperienceContainingAndSalaryContainingAndTechnologyStackContaining(
+    // 필터링 메서드: 위치, 고용 유형, 섹터, 급여
+    Page<Job> findByLocationContainingAndEmploymentTypeContainingAndSectorContainingAndSalaryBetween(
             String location,
-            String experience,
-            String salary,
-            String technologyStack,
+            String employmentType,
+            String sector,
+            Integer minSalary,
+            Integer maxSalary,
             Pageable pageable
     );
 
-    // 키워드와 다른 조건을 결합한 검색 메서드
-    Page<Job> findByTitleContainingAndLocationContainingAndExperienceContainingAndSalaryContainingAndTechnologyStackContaining(
-            String title,
+    // 제목 키워드 검색과 필터링
+    Page<Job> findByTitleContainingAndLocationContainingAndEmploymentTypeContainingAndSectorContainingAndSalaryBetween(
+            String titleKeyword,
             String location,
-            String experience,
-            String salary,
-            String technologyStack,
+            String employmentType,
+            String sector,
+            Integer minSalary,
+            Integer maxSalary,
             Pageable pageable
     );
 
-    // createdAt 기준으로 정렬
+    // 생성일 기준으로 정렬
     Page<Job> findAllByOrderByCreatedAtDesc(Pageable pageable);
+
+    // 급여 범위 검색 (급여가 0이 아닌 경우만)
+    @Query("SELECT j FROM Job j WHERE j.salary BETWEEN :minSalary AND :maxSalary AND j.salary > 0")
+    Page<Job> findBySalaryBetweenAndExcludeZero(
+            @Param("minSalary") Integer minSalary,
+            @Param("maxSalary") Integer maxSalary,
+            Pageable pageable
+    );
 }
