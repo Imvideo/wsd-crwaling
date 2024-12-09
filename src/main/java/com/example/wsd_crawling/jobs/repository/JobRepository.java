@@ -1,6 +1,7 @@
 package com.example.wsd_crawling.jobs.repository;
 
 import com.example.wsd_crawling.jobs.model.Job;
+import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -40,4 +41,7 @@ public interface JobRepository extends JpaRepository<Job, Long> {
             @Param("maxSalary") Integer maxSalary,
             Pageable pageable
     );
+
+    // 관련 공고 조회 (분야 기반)
+    List<Job> findBySectorContainingAndIdNot(String sector, Long id, Pageable pageable);
 }

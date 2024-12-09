@@ -129,4 +129,5 @@ public class Job {
     public void setSector(String sector) {
         this.sector = sector;
     }
+
 }
