@@ -45,10 +45,6 @@ public class JobService {
         );
     }
 
-    public Page<Job> getJobsSortedByCreatedAt(Pageable pageable) {
-        return jobRepository.findAllByOrderByCreatedAtDesc(pageable);
-    }
-
     // ID로 공고 조회
     public Job getJobById(Long id) {
         return jobRepository.findById(id).orElse(null);
@@ -67,21 +63,17 @@ public class JobService {
         statsRepository.save(stats);
     }
 
+
     // 관련 공고 추천
     public List<Job> getRelatedJobs(Long jobId) {
         Job job = jobRepository.findById(jobId).orElse(null);
-        if (job == null) {
-            return List.of();
+        if (job == null || job.getSector() == null || job.getSector().isEmpty()) {
+            return List.of(); // 관련 공고가 없으면 빈 리스트 반환
         }
 
         // 동일한 분야(Sector)에서 최대 3개의 공고 추천
         return jobRepository.findBySectorContainingAndIdNot(job.getSector(), jobId, PageRequest.of(0, 3));
     }
 
-    // 조회수 가져오기
-    public int getViewCount(Long jobId) {
-        JobPostingStats stats = statsRepository.findByJobPostingId(jobId).orElse(null);
-        return stats != null ? stats.getViewCount() : 0;
-    }
 
 }
