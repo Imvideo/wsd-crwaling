@@ -5,7 +5,7 @@ import com.example.wsd_crawling.applications.repository.ApplicationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.Optional;
+import java.time.LocalDateTime;
 
 @Service
 public class ApplicationService {
@@ -13,20 +13,19 @@ public class ApplicationService {
     @Autowired
     private ApplicationRepository applicationRepository;
 
-    public boolean hasAlreadyApplied(Long userId, Long jobPostingId) {
-        return applicationRepository.findByUserIdAndJobPostingId(userId, jobPostingId).isPresent();
-    }
-
-    public Application applyForJob(Long userId, Long jobPostingId, String resume) {
-        if (hasAlreadyApplied(userId, jobPostingId)) {
-            throw new IllegalArgumentException("User has already applied for this job.");
+    public void apply(Long userId, Long jobPostingId) {
+        // 중복 지원 체크
+        if (applicationRepository.findByUserIdAndJobPostingId(userId, jobPostingId).isPresent()) {
+            throw new IllegalStateException("이미 해당 공고에 지원하셨습니다.");
         }
 
+        // 새로운 지원 저장
         Application application = new Application();
         application.setUserId(userId);
         application.setJobPostingId(jobPostingId);
-        application.setResume(resume);
+        application.setApplicationDate(LocalDateTime.now());
+        application.setStatus("PENDING");
 
-        return applicationRepository.save(application);
+        applicationRepository.save(application);
     }
 }

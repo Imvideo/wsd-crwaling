@@ -17,14 +17,13 @@ public class Application {
     @Column(name = "job_posting_id", nullable = false)
     private Long jobPostingId;
 
-    @Column(name = "resume", nullable = true)
-    private String resume;
+    @Column(name = "application_date", nullable = false)
+    private LocalDateTime applicationDate;
 
-    @Column(name = "applied_at", nullable = false)
-    private LocalDateTime appliedAt = LocalDateTime.now();
+    @Column(name = "status", nullable = false)
+    private String status;
 
     // Getters and Setters
-
     public Long getId() {
         return id;
     }
@@ -49,19 +48,19 @@ public class Application {
         this.jobPostingId = jobPostingId;
     }
 
-    public String getResume() {
-        return resume;
+    public LocalDateTime getApplicationDate() {
+        return applicationDate;
     }
 
-    public void setResume(String resume) {
-        this.resume = resume;
+    public void setApplicationDate(LocalDateTime applicationDate) {
+        this.applicationDate = applicationDate;
     }
 
-    public LocalDateTime getAppliedAt() {
-        return appliedAt;
+    public String getStatus() {
+        return status;
     }
 
-    public void setAppliedAt(LocalDateTime appliedAt) {
-        this.appliedAt = appliedAt;
+    public void setStatus(String status) {
+        this.status = status;
     }
 }
