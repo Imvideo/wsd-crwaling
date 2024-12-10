@@ -54,11 +54,12 @@ public class JobController {
         // 관련 공고 조회
         List<Job> relatedJobs = jobService.getRelatedJobs(id);
 
-        // 공고 상세 정보와 관련 공고 함께 반환
+        // 공고 상세 정보와 관련 공고를 Map에 담아 반환
         Map<String, Object> response = new HashMap<>();
-        response.put("job", job);
-        response.put("relatedJobs", relatedJobs);
+        response.put("mainJob", job);  // ID로 조회한 공고 정보
+        response.put("relatedJobs", relatedJobs);  // 관련 공고 목록
 
         return ResponseEntity.ok(response);
     }
+
 }

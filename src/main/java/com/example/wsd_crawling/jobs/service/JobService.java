@@ -4,7 +4,9 @@ import com.example.wsd_crawling.jobs.model.Job;
 import com.example.wsd_crawling.jobs.model.JobPostingStats;
 import com.example.wsd_crawling.jobs.repository.JobRepository;
 import com.example.wsd_crawling.jobs.repository.StatsRepository;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -72,8 +74,8 @@ public class JobService {
             return List.of();
         }
 
-        // 동일한 분야(Sector)에서 최대 5개의 공고를 추천
-        return jobRepository.findBySectorContainingAndIdNot(job.getSector(), jobId, PageRequest.of(0, 5));
+        // 동일한 분야(Sector)에서 최대 3개의 공고 추천
+        return jobRepository.findBySectorContainingAndIdNot(job.getSector(), jobId, PageRequest.of(0, 3));
     }
 
     // 조회수 가져오기
@@ -81,4 +83,5 @@ public class JobService {
         JobPostingStats stats = statsRepository.findByJobPostingId(jobId).orElse(null);
         return stats != null ? stats.getViewCount() : 0;
     }
+
 }
