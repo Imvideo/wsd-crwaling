@@ -33,7 +33,7 @@ public class WebSecurityConfig {
                 .csrf(csrf -> csrf.disable())  // CSRF 비활성화
                 .authorizeHttpRequests(authorizeRequests ->
                         authorizeRequests
-                                .requestMatchers("/auth/login", "/auth/register","/auth/refresh","/jobs").permitAll()  // 로그인과 회원가입은 누구나 접근 가능
+                                .requestMatchers("/auth/login", "/auth/register","/auth/refresh","/jobs/*").permitAll()
                                 .anyRequest().authenticated()  // 나머지 요청은 인증 필요
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);  // JWT 인증 필터 추가
