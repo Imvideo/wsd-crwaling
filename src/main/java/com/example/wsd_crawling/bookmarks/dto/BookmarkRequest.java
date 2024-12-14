@@ -1,8 +1,13 @@
 package com.example.wsd_crawling.bookmarks.dto;
 
+import jakarta.validation.constraints.NotNull;
+
 public class BookmarkRequest {
 
+    @NotNull(message = "사용자 ID는 필수입니다.")
     private Long userId;
+
+    @NotNull(message = "채용 공고 ID는 필수입니다.")
     private Long jobPostingId;
 
     // 기본 생성자

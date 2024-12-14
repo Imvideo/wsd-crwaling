@@ -4,6 +4,10 @@ import com.example.wsd_crawling.bookmarks.model.Bookmark;
 import com.example.wsd_crawling.bookmarks.repository.BookmarkRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 @Service
 public class BookmarkService {
@@ -27,5 +31,10 @@ public class BookmarkService {
             bookmarkRepository.save(bookmark);
             return true; // 북마크 추가됨
         }
+    }
+
+    public Page<Bookmark> getUserBookmarks(Long userId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        return bookmarkRepository.findAllByUserId(userId, pageable);
     }
 }

@@ -3,6 +3,7 @@ package com.example.wsd_crawling.config;
 import com.example.wsd_crawling.auth.filter.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -33,6 +34,7 @@ public class WebSecurityConfig {
                 .csrf(csrf -> csrf.disable())  // CSRF 비활성화
                 .authorizeHttpRequests(authorizeRequests ->
                         authorizeRequests
+                                .requestMatchers(HttpMethod.GET, "/applications/**","/bookmarks/**").permitAll() // GET 요청 허용
                                 .requestMatchers("/auth/login", "/auth/register","/auth/refresh","/jobs/*").permitAll()
                                 .anyRequest().authenticated()  // 나머지 요청은 인증 필요
                 )
