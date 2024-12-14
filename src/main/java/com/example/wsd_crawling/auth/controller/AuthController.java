@@ -1,24 +1,32 @@
 package com.example.wsd_crawling.auth.controller;
 
+import com.example.wsd_crawling.auth.dto.UserRegistrationRequest;
+import com.example.wsd_crawling.auth.dto.UserLoginRequest;
 import com.example.wsd_crawling.auth.model.User;
-import com.example.wsd_crawling.auth.model.UserRegistrationRequest;
-import com.example.wsd_crawling.auth.model.UserLoginRequest;
-import com.example.wsd_crawling.auth.repository.UserRepository;
 import com.example.wsd_crawling.auth.service.UserService;
 import com.example.wsd_crawling.auth.service.RefreshTokenService;
 import com.example.wsd_crawling.auth.util.JwtProvider;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import org.springframework.web.bind.annotation.RequestBody;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import com.example.wsd_crawling.auth.dto.RefreshTokenRequest;
 
 import java.util.HashMap;
 import java.util.Map;
 
 @RestController
 @RequestMapping("/auth")
+@Tag(name = "Authentication", description = "사용자 인증 및 관리 관련 API")
 public class AuthController {
 
     @Autowired
@@ -29,12 +37,16 @@ public class AuthController {
 
     @Autowired
     private RefreshTokenService refreshTokenService;
-    @Autowired
-    private UserRepository userRepository;
 
     // 회원 가입
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody UserRegistrationRequest request) {
+    @Operation(summary = "회원 가입", description = "새로운 사용자를 등록합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "회원 가입 성공"),
+            @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터", content = @Content(schema = @Schema(implementation = String.class))),
+            @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content(schema = @Schema(implementation = String.class)))
+    })
+    public ResponseEntity<?> register(@Valid @RequestBody UserRegistrationRequest request) {
         try {
             String result = userService.registerUser(request);
             return ResponseEntity.status(HttpStatus.CREATED).body(result);
@@ -47,47 +59,60 @@ public class AuthController {
 
     // 로그인
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody UserLoginRequest request) {
+    @Operation(summary = "로그인", description = "사용자 로그인 및 액세스 토큰 발급")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "로그인 성공", content = @Content(schema = @Schema(implementation = Map.class))),
+            @ApiResponse(responseCode = "401", description = "인증 실패", content = @Content(schema = @Schema(implementation = String.class))),
+            @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content(schema = @Schema(implementation = String.class)))
+    })
+    public ResponseEntity<?> login(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "로그인 요청 데이터",
+                    required = true,
+                    content = @Content(schema = @Schema(implementation = UserLoginRequest.class))
+            )
+            @Valid @RequestBody UserLoginRequest request
+    ) {
         try {
-            // 로그인 처리 및 토큰 생성
             Map<String, String> tokens = userService.login(request);
-
-            // 성공 응답
             return ResponseEntity.ok(tokens);
         } catch (IllegalArgumentException e) {
-            // 인증 실패
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
         } catch (Exception e) {
-            // 기타 예외 처리
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("로그인 실패: " + e.getMessage());
         }
     }
 
 
-
-
     // 토큰 갱신
     @PostMapping("/refresh")
-    public ResponseEntity<?> refreshAccessToken(@RequestBody Map<String, String> body) {
-        String refreshToken = body.get("refreshToken");
+    @Operation(summary = "토큰 갱신", description = "Refresh Token을 사용하여 Access Token을 갱신합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "토큰 갱신 성공", content = @Content(schema = @Schema(implementation = Map.class))),
+            @ApiResponse(responseCode = "401", description = "유효하지 않은 Refresh Token", content = @Content(schema = @Schema(implementation = String.class))),
+            @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content(schema = @Schema(implementation = String.class)))
+    })
+    public ResponseEntity<?> refreshAccessToken(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "Refresh Token 요청 데이터",
+                    required = true,
+                    content = @Content(schema = @Schema(implementation = RefreshTokenRequest.class))
+            )
+            @Valid @RequestBody RefreshTokenRequest request
+    ) {
+        String refreshToken = request.getRefreshToken();
 
         try {
-            // Refresh Token 검증
             if (!refreshTokenService.isTokenValid(refreshToken)) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Refresh Token이 유효하지 않습니다.");
             }
 
-            // Access Token 갱신
             String newAccessToken = jwtProvider.refreshAccessToken(refreshToken);
-
-            // Refresh Token 사용 후 무효화
             refreshTokenService.invalidateToken(refreshToken);
 
-            // 새로운 Refresh Token 발급 및 저장
             String newRefreshToken = jwtProvider.createRefreshToken(jwtProvider.extractEmailFromToken(refreshToken));
             refreshTokenService.storeToken(newRefreshToken);
 
-            // 응답 데이터 구성
             Map<String, String> tokens = new HashMap<>();
             tokens.put("accessToken", newAccessToken);
             tokens.put("refreshToken", newRefreshToken);
@@ -102,23 +127,32 @@ public class AuthController {
 
     // 회원 정보 수정
     @PutMapping("/profile")
+    @Operation(summary = "회원 정보 수정", description = "사용자의 이름 또는 이메일을 수정합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "회원 정보 수정 성공"),
+            @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터", content = @Content(schema = @Schema(implementation = String.class))),
+            @ApiResponse(responseCode = "401", description = "권한 없음", content = @Content(schema = @Schema(implementation = String.class))),
+            @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content(schema = @Schema(implementation = String.class)))
+    })
     public ResponseEntity<?> updateProfile(
-            @RequestBody UserRegistrationRequest request // 요청으로 받은 사용자 정보
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "수정할 사용자 정보",
+                    required = true,
+                    content = @Content(schema = @Schema(implementation = UserRegistrationRequest.class))
+            )
+            @Valid @RequestBody UserRegistrationRequest request
     ) {
         try {
-            // SecurityContextHolder에서 인증된 사용자 정보 가져오기
             String username = SecurityContextHolder.getContext().getAuthentication().getName();
             if (username == null || username.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인이 필요합니다.");
             }
 
-            // 이메일 기반으로 현재 사용자 찾기
             User currentUser = userService.findUserByEmail(username);
             if (currentUser == null) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("사용자 정보를 찾을 수 없습니다.");
             }
 
-            // 사용자 프로필 업데이트
             userService.updateProfile(currentUser, request);
             return ResponseEntity.ok("회원 정보가 성공적으로 수정되었습니다.");
         } catch (IllegalArgumentException e) {
@@ -127,6 +161,5 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("회원 정보 수정 실패: " + e.getMessage());
         }
     }
-
 
 }

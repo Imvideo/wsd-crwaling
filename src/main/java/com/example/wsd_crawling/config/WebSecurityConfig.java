@@ -35,7 +35,7 @@ public class WebSecurityConfig {
                 .authorizeHttpRequests(authorizeRequests ->
                         authorizeRequests
                                 .requestMatchers(HttpMethod.GET, "/applications/**","/bookmarks/**").permitAll() // GET 요청 허용
-                                .requestMatchers("/auth/login", "/auth/register","/auth/refresh","/jobs/*").permitAll()
+                                .requestMatchers("/auth/login", "/auth/register","/auth/refresh","/jobs/*","/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                                 .anyRequest().authenticated()  // 나머지 요청은 인증 필요
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);  // JWT 인증 필터 추가

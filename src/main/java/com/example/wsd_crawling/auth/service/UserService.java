@@ -1,8 +1,8 @@
 package com.example.wsd_crawling.auth.service;
 
 import com.example.wsd_crawling.auth.model.User;
-import com.example.wsd_crawling.auth.model.UserLoginRequest;
-import com.example.wsd_crawling.auth.model.UserRegistrationRequest;
+import com.example.wsd_crawling.auth.dto.UserLoginRequest;
+import com.example.wsd_crawling.auth.dto.UserRegistrationRequest;
 import com.example.wsd_crawling.auth.repository.UserRepository;
 import com.example.wsd_crawling.auth.util.JwtProvider;
 import java.util.HashMap;
