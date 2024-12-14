@@ -8,6 +8,7 @@ import com.example.wsd_crawling.auth.service.RefreshTokenService;
 import com.example.wsd_crawling.auth.util.JwtProvider;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import org.springframework.web.bind.annotation.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -127,7 +128,28 @@ public class AuthController {
 
     // 회원 정보 수정
     @PutMapping("/profile")
-    @Operation(summary = "회원 정보 수정", description = "사용자의 이름 또는 이메일을 수정합니다.")
+    @Operation(
+            summary = "회원 정보 수정",
+            description = "사용자의 이름 또는 이메일을 수정합니다.",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "수정할 사용자 정보",
+                    required = true,
+                    content = @Content(
+                            schema = @Schema(implementation = UserRegistrationRequest.class),
+                            examples = @ExampleObject(
+                                    name = "회원 정보 수정 예제",
+                                    summary = "예제 요청",
+                                    value = """
+                {
+                  "name": "JeonYoungSang2",
+                  "email": "user@example.com",
+                  "password": "password123"
+                }
+                """
+                            )
+                    )
+            )
+    )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "회원 정보 수정 성공"),
             @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터", content = @Content(schema = @Schema(implementation = String.class))),
@@ -135,11 +157,6 @@ public class AuthController {
             @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content(schema = @Schema(implementation = String.class)))
     })
     public ResponseEntity<?> updateProfile(
-            @io.swagger.v3.oas.annotations.parameters.RequestBody(
-                    description = "수정할 사용자 정보",
-                    required = true,
-                    content = @Content(schema = @Schema(implementation = UserRegistrationRequest.class))
-            )
             @Valid @RequestBody UserRegistrationRequest request
     ) {
         try {
@@ -161,5 +178,6 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("회원 정보 수정 실패: " + e.getMessage());
         }
     }
+
 
 }

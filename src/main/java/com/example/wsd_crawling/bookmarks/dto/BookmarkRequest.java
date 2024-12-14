@@ -1,13 +1,17 @@
 package com.example.wsd_crawling.bookmarks.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 
+@Schema(description = "즐겨찾기 요청 데이터 모델")
 public class BookmarkRequest {
 
     @NotNull(message = "사용자 ID는 필수입니다.")
+    @Schema(description = "사용자 ID", example = "1", required = true)
     private Long userId;
 
     @NotNull(message = "채용 공고 ID는 필수입니다.")
+    @Schema(description = "채용 공고 ID", example = "13", required = true)
     private Long jobPostingId;
 
     // 기본 생성자
