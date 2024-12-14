@@ -60,3 +60,5 @@ java -jar target/wsd-crawling-0.0.1-SNAPSHOT.jar
 
 ### Swagger 접속 및 테스트
 http://113.198.66.75:17149/swagger-ui/index.html#/
+
+Login 테스트 후 생성되는 Access Token을 Authorize에 넣고 테스트하면 됩니다.
